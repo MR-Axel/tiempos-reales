@@ -4,6 +4,8 @@ Cuánto tiempo llevó de verdad cada tarea en cada proyecto, para cotizar con da
 con intuición. Si "pagos con MercadoPago" ya se hizo en tres proyectos, el número para
 el cuarto sale del promedio de esos tres.
 
+![Tablero con datos de ejemplo](docs/tablero.png)
+
 - `catalogo.md` · promedio, mínimo y máximo por tarea genérica, sumando todos los proyectos.
 - `proyectos/<proyecto>.md` · el detalle de cada proyecto por funcionalidad, persona y mes.
 - `manual.csv` · horas cargadas a mano (ver abajo).
