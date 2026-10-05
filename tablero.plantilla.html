@@ -111,10 +111,12 @@
   .hoja tr.tot td { border-top: 2px solid #1d2026; border-bottom: 0; font-weight: 700; font-size: 17px; }
   .hoja .pie { margin: 18px 0 0; color: #5c6370; font-size: 13px; white-space: pre-wrap; }
   .aviso { margin: 0 0 16px; padding: 10px 14px; border: 1px dashed var(--tinta-3); border-radius: 10px; color: var(--tinta-2); font-size: 13.5px; }
+  .cafe { margin: 40px 2px 0; padding-top: 16px; border-top: 1px solid var(--linea); color: var(--tinta-3); font-size: 13px; }
+  .cafe a { color: var(--lima-tinta); font-weight: 600; text-underline-offset: 3px; }
   .nota { margin: 14px 2px 0; color: var(--tinta-3); font-size: 12.5px; }
   @media (max-width: 900px) { .comp { grid-template-columns: 1fr; } .cot { grid-template-columns: 1fr; } .resumen { position: static; } .envoltura { padding: 20px 14px 60px; } }
   @media print {
-    .ajustes, nav.pest, .barra, .acciones, .atajos, .suma { display: none !important; }
+    .ajustes, nav.pest, .barra, .acciones, .atajos, .suma, .cafe { display: none !important; }
     body { background: #fff; }
     body[data-vista="compartir"] header.cab, body[data-vista="compartir"] .kpis, body[data-vista="compartir"] .opciones, body[data-vista="compartir"] .aviso { display: none !important; }
     body[data-vista="compartir"] .comp { display: block; }
@@ -214,6 +216,7 @@
     <div class="meses" id="meses"></div>
     <div class="leyenda"><span><i style="background:#84cc16"></i>Medidas</span><span><i style="background:var(--linea)"></i>Estimadas</span></div>
   </section>
+  <p class="cafe">¿Te ahorró tiempo? <a href="https://ko-fi.com/mraxel" target="_blank" rel="noopener noreferrer">Invitame un café</a>.</p>
 </div>
 
 <script>

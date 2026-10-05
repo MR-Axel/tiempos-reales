@@ -176,6 +176,8 @@ Otro (alta de cuentas, revisión de tiendas, dominios de correo, esperar al clie
 
 ## Apoyar
 
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/mraxel)
+
 Es gratis y todo queda en tu máquina. Si te ahorra tiempo, podés [bancar la próxima herramienta en Ko-fi](https://ko-fi.com/mraxel).
 
 ## Licencia
