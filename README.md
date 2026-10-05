@@ -174,6 +174,10 @@ Otro (alta de cuentas, revisión de tiendas, dominios de correo, esperar al clie
 - La clasificación por palabras clave se equivoca en los bordes; la confianza de cada fila
   lo indica.
 
+## Apoyar
+
+Es gratis y todo queda en tu máquina. Si te ahorra tiempo, podés [bancar la próxima herramienta en Ko-fi](https://ko-fi.com/mraxel).
+
 ## Licencia
 
 MIT. Ver [LICENSE](LICENSE).
