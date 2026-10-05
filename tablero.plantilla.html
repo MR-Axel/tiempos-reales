@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiempos reales</title>
+<style>
+  :root {
+    --papel: #fbfaf7; --papel-2: #f2f0ea; --tinta: #1d2026; --tinta-2: #5c6370; --tinta-3: #8a909c;
+    --linea: #dedbd2; --lima: #bef264; --lima-tinta: #4d7c0f; --lima-suave: rgba(101, 163, 13, 0.14);
+    --ambar: #b45309; --rojo: #b91c1c; --sombra: 0 8px 30px rgba(20, 22, 28, 0.10);
+    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  :root[data-tema="oscuro"] {
+    --papel: #121418; --papel-2: #1a1d23; --tinta: #e6e8ec; --tinta-2: #a0a7b4; --tinta-3: #6b7280;
+    --linea: #2a2e37; --lima-tinta: #bef264; --lima-suave: rgba(190, 242, 100, 0.13);
+    --ambar: #f59e0b; --rojo: #f87171; --sombra: 0 8px 30px rgba(0, 0, 0, 0.5);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--papel); color: var(--tinta); font: 15px/1.5 -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  .envoltura { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+  header.cab { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 28px; margin-bottom: 22px; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+  .sub { margin: 4px 0 0; color: var(--tinta-2); font-size: 13.5px; }
+  .ajustes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+  .campo { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tinta-2); }
+  .campo input, .campo select, .buscar { height: 36px; padding: 0 10px; border: 1px solid var(--linea); border-radius: 8px; background: var(--papel-2); color: var(--tinta); font: inherit; font-size: 14px; }
+  .campo input[type=number] { width: 104px; font-variant-numeric: tabular-nums; }
+  .campo input:focus, .campo select:focus, .buscar:focus { outline: 2px solid var(--lima-tinta); outline-offset: -1px; }
+  .btn { height: 36px; padding: 0 13px; border: 1px solid var(--linea); border-radius: 8px; background: var(--papel-2); color: var(--tinta); font: inherit; font-size: 14px; cursor: pointer; }
+  .btn:hover { border-color: var(--tinta-3); }
+  .btn.principal { background: var(--lima); border-color: var(--lima); color: #14161a; font-weight: 600; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .kpi { padding: 14px 16px; border: 1px solid var(--linea); border-radius: 12px; background: var(--papel-2); }
+  .kpi b { display: block; font-size: 24px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .kpi span { color: var(--tinta-2); font-size: 12.5px; }
+  .kpi small { display: block; color: var(--lima-tinta); font-size: 12.5px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  nav.pest { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: var(--papel-2); border: 1px solid var(--linea); border-radius: 11px; width: fit-content; max-width: 100%; overflow-x: auto; }
+  nav.pest button { height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--tinta-2); font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  nav.pest button.activa { background: var(--lima); color: #14161a; font-weight: 600; }
+  .barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .buscar { flex: 1; min-width: 200px; max-width: 360px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 30px; padding: 0 11px; border: 1px solid var(--linea); border-radius: 15px; background: transparent; color: var(--tinta-2); font: inherit; font-size: 13px; cursor: pointer; }
+  .chip.activa { background: var(--lima-suave); border-color: var(--lima-tinta); color: var(--lima-tinta); font-weight: 600; }
+  .tabla-caja { border: 1px solid var(--linea); border-radius: 12px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  tr:last-child > td { border-bottom: 0; }
+  th { position: sticky; top: 0; background: var(--papel-2); color: var(--tinta-2); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; user-select: none; }
+  th[data-orden] { cursor: pointer; }
+  th[data-orden]:hover { color: var(--tinta); }
+  th .fle { opacity: 0.9; margin-left: 3px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.plata { color: var(--lima-tinta); font-weight: 600; }
+  tr.fila { cursor: pointer; }
+  tr.fila:hover > td { background: var(--lima-suave); }
+  tr.detalle > td { background: var(--papel-2); padding: 10px 14px 14px 44px; }
+  .mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px 18px; }
+  .mini div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+  .mini b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .rango { display: inline-block; width: 110px; height: 6px; border-radius: 3px; background: var(--linea); position: relative; vertical-align: middle; margin-left: 8px; }
+  .rango i { position: absolute; top: -3px; width: 3px; height: 12px; border-radius: 2px; background: var(--lima-tinta); }
+  .conf { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .conf.alta { background: var(--lima-suave); color: var(--lima-tinta); }
+  .conf.media { background: rgba(180, 83, 9, 0.12); color: var(--ambar); }
+  .conf.baja { background: rgba(185, 28, 28, 0.10); color: var(--rojo); }
+  .tipo { color: var(--tinta-2); font-size: 12.5px; }
+  input[type=checkbox] { width: 16px; height: 16px; accent-color: #65a30d; cursor: pointer; }
+  .cot { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; align-items: start; }
+  .cot td input[type=number] { width: 78px; height: 30px; padding: 0 8px; border: 1px solid var(--linea); border-radius: 7px; background: var(--papel); color: var(--tinta); font: inherit; font-variant-numeric: tabular-nums; text-align: right; }
+  .atajos button { height: 24px; padding: 0 7px; border: 1px solid var(--linea); border-radius: 6px; background: transparent; color: var(--tinta-2); font: inherit; font-size: 11.5px; cursor: pointer; }
+  .atajos button:hover { color: var(--tinta); border-color: var(--tinta-3); }
+  .resumen { position: sticky; top: 16px; padding: 18px; border: 1px solid var(--linea); border-radius: 12px; background: var(--papel-2); box-shadow: var(--sombra); }
+  .resumen h3 { margin: 0 0 12px; font-size: 15px; }
+  .resumen .lin { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .resumen .lin.total { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--linea); font-size: 18px; font-weight: 700; }
+  .resumen .lin.total b { color: var(--lima-tinta); }
+  .resumen .col { display: grid; grid-template-columns: 1fr 74px; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; color: var(--tinta-2); }
+  .resumen .col input { height: 30px; padding: 0 8px; border: 1px solid var(--linea); border-radius: 7px; background: var(--papel); color: var(--tinta); font: inherit; text-align: right; width: 100%; }
+  .resumen .acciones { display: flex; gap: 8px; margin-top: 14px; }
+  .vacio { padding: 34px 20px; text-align: center; color: var(--tinta-2); }
+  .meses { display: flex; align-items: flex-end; gap: 6px; height: 240px; padding: 16px; border: 1px solid var(--linea); border-radius: 12px; overflow-x: auto; }
+  .mes { flex: 1; min-width: 34px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+  .mes .col { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; flex: 1; }
+  .mes .est { background: var(--linea); border-radius: 4px 4px 0 0; }
+  .mes .med { background: #84cc16; }
+  .mes .col > div:first-child { border-radius: 4px 4px 0 0; }
+  .mes span { font-size: 10.5px; color: var(--tinta-3); white-space: nowrap; }
+  .mes em { font-style: normal; font-size: 11px; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+  .leyenda { display: flex; gap: 16px; margin: 10px 2px 0; color: var(--tinta-2); font-size: 12.5px; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .suma { position: sticky; bottom: 14px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; padding: 12px 16px; border: 1px solid var(--lima-tinta); border-radius: 12px; background: var(--papel); box-shadow: var(--sombra); }
+  .suma b { font-size: 16px; font-variant-numeric: tabular-nums; }
+  .suma .plata { color: var(--lima-tinta); }
+  .suma span.gris { color: var(--tinta-2); font-size: 13px; }
+  .suma .empuje { flex: 1; }
+  .comp { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; align-items: start; }
+  .comp .opciones { padding: 16px; border: 1px solid var(--linea); border-radius: 12px; background: var(--papel-2); display: flex; flex-direction: column; gap: 12px; }
+  .comp .opciones h3 { margin: 0; font-size: 15px; }
+  .comp .opciones input[type=text], .comp .opciones textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 8px; background: var(--papel); color: var(--tinta); font: inherit; font-size: 14px; }
+  .comp .opciones textarea { min-height: 70px; resize: vertical; }
+  .comp .tilde { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+  .comp .acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+  .hoja { padding: 34px 38px; border: 1px solid var(--linea); border-radius: 12px; background: #fff; color: #1d2026; box-shadow: var(--sombra); }
+  .hoja h2 { margin: 0; font-size: 24px; letter-spacing: -0.02em; }
+  .hoja .meta { margin: 4px 0 22px; color: #5c6370; font-size: 13.5px; }
+  .hoja table { font-size: 15px; }
+  .hoja th { position: static; background: transparent; color: #5c6370; border-bottom: 2px solid #1d2026; }
+  .hoja td, .hoja th { border-color: #dedbd2; padding: 10px 8px; }
+  .hoja tr.tot td { border-top: 2px solid #1d2026; border-bottom: 0; font-weight: 700; font-size: 17px; }
+  .hoja .pie { margin: 18px 0 0; color: #5c6370; font-size: 13px; white-space: pre-wrap; }
+  .aviso { margin: 0 0 16px; padding: 10px 14px; border: 1px dashed var(--tinta-3); border-radius: 10px; color: var(--tinta-2); font-size: 13.5px; }
+  .nota { margin: 14px 2px 0; color: var(--tinta-3); font-size: 12.5px; }
+  @media (max-width: 900px) { .comp { grid-template-columns: 1fr; } .cot { grid-template-columns: 1fr; } .resumen { position: static; } .envoltura { padding: 20px 14px 60px; } }
+  @media print {
+    .ajustes, nav.pest, .barra, .acciones, .atajos, .suma { display: none !important; }
+    body { background: #fff; }
+    body[data-vista="compartir"] header.cab, body[data-vista="compartir"] .kpis, body[data-vista="compartir"] .opciones, body[data-vista="compartir"] .aviso { display: none !important; }
+    body[data-vista="compartir"] .comp { display: block; }
+    body[data-vista="compartir"] .hoja { border: 0; box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="envoltura">
+  <header class="cab">
+    <div>
+      <h1>Tiempos reales</h1>
+      <p class="sub" id="sub"></p>
+    </div>
+    <div class="ajustes">
+      <label class="campo">Valor por hora<input type="number" id="tarifa" min="0" step="1"></label>
+      <label class="campo">Moneda<select id="moneda"><option>USD</option><option>ARS</option><option>EUR</option></select></label>
+      <button class="btn" id="tema" type="button" title="Cambiar entre claro y oscuro">Tema</button>
+    </div>
+  </header>
+
+  <p class="aviso" id="aviso" hidden>Estos son datos de ejemplo. Corré <code>node tiempos.mjs</code> para generar el tablero con los tuyos.</p>
+
+  <section class="kpis" id="kpis"></section>
+
+  <nav class="pest" id="pest">
+    <button data-v="tareas" class="activa" type="button">Tareas</button>
+    <button data-v="cotizador" type="button">Cotizador <span id="cuenta"></span></button>
+    <button data-v="compartir" type="button">Para compartir</button>
+    <button data-v="proyectos" type="button">Proyectos</button>
+    <button data-v="meses" type="button">Por mes</button>
+  </nav>
+
+  <section data-vista="tareas">
+    <div class="barra">
+      <input class="buscar" id="buscar" type="search" placeholder="Buscar una tarea">
+      <div class="chips" id="chips-tipo"></div>
+      <div class="chips" id="chips-conf"></div>
+      <button class="chip" id="solo-sel" type="button">Solo seleccionadas</button>
+    </div>
+    <div class="tabla-caja"><table id="t-tareas"></table></div>
+    <div class="suma" id="suma" hidden></div>
+    <p class="nota">Promedio es el número para arrancar una cotización; mínimo y máximo dicen cuánto varía entre proyectos. Tildá una tarea para llevarla al cotizador y tocá la fila para ver en qué proyectos se hizo.</p>
+  </section>
+
+  <section data-vista="cotizador" hidden>
+    <div class="cot">
+      <div>
+        <div class="tabla-caja"><table id="t-cot"></table></div>
+        <p class="nota">Las horas arrancan en el promedio y se pueden pisar a mano. Las horas medidas ya son con Claude Code: no hay que aplicarles otra vez un factor de aceleración.</p>
+      </div>
+      <aside class="resumen">
+        <h3>Resumen</h3>
+        <div class="lin"><span>Horas base</span><b id="r-base">0</b></div>
+        <div class="col"><span>Colchón, reloj propio %</span><input type="number" id="c-propio" min="0" step="1"></div>
+        <div class="col"><span>Colchón, comportamiento ajeno %</span><input type="number" id="c-ajeno" min="0" step="1"></div>
+        <div class="col"><span>Colchón, reloj de otro %</span><input type="number" id="c-otro" min="0" step="1"></div>
+        <div class="lin"><span>Colchón</span><b id="r-colchon">0</b></div>
+        <div class="lin"><span>Horas totales</span><b id="r-horas">0</b></div>
+        <div class="lin"><span>Jornadas de 8 h</span><b id="r-dias">0</b></div>
+        <div class="lin total"><span>Costo</span><b id="r-costo">0</b></div>
+        <div class="acciones">
+          <button class="btn principal" id="copiar" type="button">Copiar resumen</button>
+          <button class="btn" id="limpiar" type="button">Vaciar</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section data-vista="compartir" hidden>
+    <div class="comp">
+      <div class="opciones">
+        <h3>Qué se muestra</h3>
+        <label class="campo">Título<input type="text" id="s-titulo"></label>
+        <label class="campo">Para quién (opcional)<input type="text" id="s-cliente" placeholder="Nombre del cliente o del proyecto"></label>
+        <label class="tilde"><input type="checkbox" id="s-horas"> Mostrar las horas</label>
+        <label class="tilde"><input type="checkbox" id="s-costo"> Mostrar el costo</label>
+        <label class="tilde"><input type="checkbox" id="s-redondear"> Redondear cada ítem a media hora</label>
+        <label class="campo">Nota al pie (opcional)<textarea id="s-nota" placeholder="Condiciones, validez de la estimación, qué no incluye"></textarea></label>
+        <div class="acciones">
+          <button class="btn principal" id="s-copiar" type="button">Copiar texto</button>
+          <button class="btn" id="s-pdf" type="button">Imprimir o PDF</button>
+          <button class="btn" id="s-html" type="button">Descargar HTML</button>
+        </div>
+        <p class="nota" style="margin:0">Esta hoja lleva solo los títulos, las horas y el costo. No incluye nombres de proyectos, historial ni confianza. El colchón va sumado dentro de cada ítem.</p>
+      </div>
+      <div class="hoja" id="hoja"></div>
+    </div>
+  </section>
+
+  <section data-vista="proyectos" hidden>
+    <div class="tabla-caja"><table id="t-proy"></table></div>
+    <p class="nota">Medidas: sesiones con registro de trabajo. Estimadas: sesiones con commits solos, multiplicadas por el factor de calibración. Tocá un proyecto para ver sus funcionalidades.</p>
+  </section>
+
+  <section data-vista="meses" hidden>
+    <div class="meses" id="meses"></div>
+    <div class="leyenda"><span><i style="background:#84cc16"></i>Medidas</span><span><i style="background:var(--linea)"></i>Estimadas</span></div>
+  </section>
+</div>
+
+<script>
+// tiempos.mjs reemplaza el null de abajo por los datos reales. Si queda en null, se muestran datos de ejemplo.
+const DATOS_REALES = /*__DATOS__*/null;
+
+const EJEMPLO = {
+  generado: '2026-01-15', desde: '2025-03-01', hasta: '2026-01-15', total: 412, medido: 268, estimado: 144, reloj: 350, factor: 1.4,
+  tareas: [
+    { id: 'landing', nombre: 'Landing y web de marketing', tipo: 'propio', n: 4, prom: 11.5, min: 4, max: 22, tot: 46, conf: 'alta', proyectos: [{ nombre: 'Tienda A', h: 22 }, { nombre: 'App B', h: 12 }, { nombre: 'Sitio C', h: 8 }, { nombre: 'Demo D', h: 4 }] },
+    { id: 'auth', nombre: 'Login, registro y autenticación', tipo: 'propio', n: 3, prom: 6, min: 3, max: 10, tot: 18, conf: 'media', proyectos: [{ nombre: 'App B', h: 10 }, { nombre: 'Tienda A', h: 5 }, { nombre: 'Demo D', h: 3 }] },
+    { id: 'pagos', nombre: 'Pagos', tipo: 'ajeno', n: 2, prom: 14, min: 6, max: 22, tot: 28, conf: 'media', proyectos: [{ nombre: 'Tienda A', h: 22 }, { nombre: 'App B', h: 6 }] },
+    { id: 'deploy', nombre: 'Despliegue e infraestructura', tipo: 'otro', n: 4, prom: 5, min: 2, max: 9, tot: 20, conf: 'baja', proyectos: [{ nombre: 'Tienda A', h: 9 }, { nombre: 'App B', h: 6 }, { nombre: 'Sitio C', h: 3 }, { nombre: 'Demo D', h: 2 }] },
+  ],
+  proyectos: [
+    { id: 'tienda-a', nombre: 'Tienda A', total: 180, medido: 120, estimado: 60, ini: '2025-03-01', fin: '2025-09-20', sesiones: 96, temas: [{ tema: 'Landing', tarea: 'Landing y web de marketing', h: 22, medido: 18, estimado: 4, dias: 30, conf: 'alta' }, { tema: 'Pagos', tarea: 'Pagos', h: 22, medido: 14, estimado: 8, dias: 21, conf: 'media' }] },
+    { id: 'app-b', nombre: 'App B', total: 140, medido: 100, estimado: 40, ini: '2025-07-10', fin: '2026-01-15', sesiones: 71, temas: [{ tema: 'Login', tarea: 'Login, registro y autenticación', h: 10, medido: 10, estimado: 0, dias: 6, conf: 'alta' }] },
+  ],
+  meses: [{ mes: '2025-09', medido: 30, estimado: 22 }, { mes: '2025-10', medido: 44, estimado: 18 }, { mes: '2025-11', medido: 52, estimado: 10 }, { mes: '2025-12', medido: 61, estimado: 6 }, { mes: '2026-01', medido: 28, estimado: 4 }],
+  tipos: { propio: 'Reloj propio', ajeno: 'Propio, comportamiento ajeno', otro: 'Reloj de otro' },
+};
+
+const D = DATOS_REALES || EJEMPLO;
+const $ = (s) => document.querySelector(s);
+const guardado = (() => { try { return JSON.parse(localStorage.getItem('tiempos-reales') || '{}'); } catch (e) { return {}; } })();
+const E = Object.assign({ soloSel: false, compartir: { titulo: 'Estimación', cliente: '', horas: true, costo: true, redondear: true, nota: '' }, tarifa: 35, moneda: 'USD', tema: 'claro', colchon: { propio: 15, ajeno: 15, otro: 22 }, elegidas: {}, orden: { col: 'tot', dir: -1 }, ordenP: { col: 'total', dir: -1 }, tipo: '', conf: '', vista: 'tareas' }, guardado);
+const guardar = () => { try { localStorage.setItem('tiempos-reales', JSON.stringify(E)); } catch (e) { /* sin almacenamiento */ } };
+
+const h = (x, dec = 1) => (Math.round(x * 10 ** dec) / 10 ** dec).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const plata = (x) => E.moneda + ' ' + Math.round(x).toLocaleString('es-AR');
+const fecha = (iso) => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(2, 4) : '';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sinTilde = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const tipoNombre = (t) => (D.tipos && D.tipos[t]) || t;
+const abiertas = new Set();
+
+function kpis() {
+  $('#sub').textContent = D.proyectos.length + ' proyectos · del ' + fecha(D.desde) + ' al ' + fecha(D.hasta) + ' · generado el ' + fecha(D.generado);
+  const tarjetas = [
+    [h(D.total, 0) + ' h', 'Sumando todos los proyectos', plata(D.total * E.tarifa)],
+    [h(D.medido, 0) + ' h', 'Medidas (' + Math.round(D.medido / (D.total || 1) * 100) + ' %)', ''],
+    [h(D.estimado, 0) + ' h', 'Estimadas desde commits', D.factor ? 'factor ×' + h(D.factor) : ''],
+    [D.reloj ? h(D.reloj, 0) + ' h' : 'sin dato', 'De reloj, sin superponer', D.reloj ? plata(D.reloj * E.tarifa) : ''],
+    [String(D.tareas.length), 'Tareas con historial', ''],
+  ];
+  $('#kpis').innerHTML = tarjetas.map((k) => '<div class="kpi"><b>' + k[0] + '</b><span>' + k[1] + '</span>' + (k[2] ? '<small>' + k[2] + '</small>' : '') + '</div>').join('');
+}
+
+function cabecera(cols, orden) {
+  return '<thead><tr>' + cols.map((c) => '<th' + (c.num ? ' class="num"' : '') + (c.k ? ' data-orden="' + c.k + '"' : '') + '>' + c.t + (c.k && orden.col === c.k ? '<span class="fle">' + (orden.dir > 0 ? '▲' : '▼') + '</span>' : '') + '</th>').join('') + '</tr></thead>';
+}
+
+function tareas() {
+  const q = sinTilde($('#buscar').value.trim());
+  const max = Math.max.apply(null, D.tareas.map((t) => t.max).concat([1]));
+  const filas = D.tareas
+    .filter((t) => (!q || sinTilde(t.nombre).includes(q)) && (!E.tipo || t.tipo === E.tipo) && (!E.conf || t.conf === E.conf) && (!E.soloSel || E.elegidas[t.id] != null))
+    .sort((a, b) => { const x = a[E.orden.col], y = b[E.orden.col]; return (typeof x === 'string' ? x.localeCompare(y, 'es') : x - y) * E.orden.dir; });
+  const cols = [{ t: '' }, { t: 'Tarea', k: 'nombre' }, { t: 'Veces', k: 'n', num: 1 }, { t: 'Promedio h', k: 'prom', num: 1 }, { t: 'Mín a máx h', k: 'max', num: 1 }, { t: 'Costo promedio', k: 'prom', num: 1 }, { t: 'Total h', k: 'tot', num: 1 }, { t: 'Confianza', k: 'conf' }];
+  let html = cabecera(cols, E.orden) + '<tbody>';
+  if (!filas.length) html += '<tr><td colspan="8" class="vacio">' + (E.soloSel ? 'Todavía no seleccionaste tareas.' : 'Ninguna tarea coincide con el filtro.') + '</td></tr>';
+  $('#solo-sel').classList.toggle('activa', !!E.soloSel);
+  filas.forEach((t) => {
+    html += '<tr class="fila" data-id="' + esc(t.id) + '"><td><input type="checkbox" data-elegir="' + esc(t.id) + '"' + (E.elegidas[t.id] != null ? ' checked' : '') + ' aria-label="Llevar al cotizador"></td>' +
+      '<td><b>' + esc(t.nombre) + '</b><div class="tipo">' + esc(tipoNombre(t.tipo)) + '</div></td>' +
+      '<td class="num">' + t.n + '</td><td class="num"><b>' + h(t.prom) + '</b></td>' +
+      '<td class="num">' + h(t.min) + ' a ' + h(t.max) + '<span class="rango"><i style="left:' + (t.min / max * 100) + '%"></i><i style="left:' + (t.prom / max * 100) + '%;background:var(--tinta)"></i><i style="left:calc(' + (t.max / max * 100) + '% - 3px)"></i></span></td>' +
+      '<td class="num plata">' + plata(t.prom * E.tarifa) + '</td><td class="num">' + h(t.tot, 0) + '</td>' +
+      '<td><span class="conf ' + t.conf + '">' + t.conf + '</span></td></tr>';
+    if (abiertas.has('t:' + t.id)) {
+      html += '<tr class="detalle"><td colspan="8"><div class="mini">' + t.proyectos.map((p) => '<div><span>' + esc(p.nombre) + '</span><b>' + h(p.h) + ' h · ' + plata(p.h * E.tarifa) + '</b></div>').join('') + '</div></td></tr>';
+    }
+  });
+  $('#t-tareas').innerHTML = html + '</tbody>';
+}
+
+function chips() {
+  const tipos = [['', 'Todos los tipos']].concat(Object.keys(D.tipos || {}).map((k) => [k, tipoNombre(k)]));
+  $('#chips-tipo').innerHTML = tipos.map((t) => '<button class="chip' + (E.tipo === t[0] ? ' activa' : '') + '" data-tipo="' + t[0] + '" type="button">' + esc(t[1]) + '</button>').join('');
+  const conf = [['', 'Toda confianza'], ['alta', 'Alta'], ['media', 'Media'], ['baja', 'Baja']];
+  $('#chips-conf').innerHTML = conf.map((t) => '<button class="chip' + (E.conf === t[0] ? ' activa' : '') + '" data-conf="' + t[0] + '" type="button">' + t[1] + '</button>').join('');
+}
+
+function cotizador() {
+  const ids = Object.keys(E.elegidas).filter((id) => D.tareas.some((t) => t.id === id));
+  $('#cuenta').textContent = ids.length ? '(' + ids.length + ')' : '';
+  let html = cabecera([{ t: 'Tarea' }, { t: 'Horas', num: 1 }, { t: 'Atajos' }, { t: 'Costo', num: 1 }, { t: '' }], {}) + '<tbody>';
+  if (!ids.length) html += '<tr><td colspan="5" class="vacio">Todavía no elegiste tareas. Tildalas en la pestaña Tareas.</td></tr>';
+  ids.forEach((id) => {
+    const t = D.tareas.find((x) => x.id === id);
+    const horas = Number(E.elegidas[id]) || 0;
+    html += '<tr><td><b>' + esc(t.nombre) + '</b><div class="tipo">' + esc(tipoNombre(t.tipo)) + ' · ' + t.n + (t.n === 1 ? ' vez' : ' veces') + ' · confianza ' + t.conf + '</div></td>' +
+      '<td class="num"><input type="number" min="0" step="0.5" value="' + horas + '" data-horas="' + esc(id) + '"></td>' +
+      '<td class="atajos"><button data-set="' + esc(id) + '" data-v="' + t.min + '" type="button">mín ' + h(t.min) + '</button> <button data-set="' + esc(id) + '" data-v="' + t.prom + '" type="button">prom ' + h(t.prom) + '</button> <button data-set="' + esc(id) + '" data-v="' + t.max + '" type="button">máx ' + h(t.max) + '</button></td>' +
+      '<td class="num plata" data-costo="' + esc(id) + '">' + plata(horas * E.tarifa) + '</td><td><button class="btn" data-quitar="' + esc(id) + '" type="button" style="height:30px">Quitar</button></td></tr>';
+  });
+  $('#t-cot').innerHTML = html + '</tbody>';
+  return resumen();
+}
+
+// Totales del cotizador. Se recalculan sin redibujar la tabla, para no sacar el foco del campo que se está editando.
+function resumen() {
+  const ids = Object.keys(E.elegidas).filter((id) => D.tareas.some((t) => t.id === id));
+  let base = 0, colchon = 0;
+  ids.forEach((id) => {
+    const t = D.tareas.find((x) => x.id === id);
+    const horas = Number(E.elegidas[id]) || 0;
+    base += horas; colchon += horas * (Number(E.colchon[t.tipo]) || 0) / 100;
+  });
+  const total = base + colchon;
+  $('#r-base').textContent = h(base) + ' h';
+  $('#r-colchon').textContent = h(colchon) + ' h';
+  $('#r-horas').textContent = h(total) + ' h';
+  $('#r-dias').textContent = h(total / 8);
+  $('#r-costo').textContent = plata(total * E.tarifa);
+  const r = { ids, base, colchon, total };
+  suma(r);
+  compartir();
+  return r;
+}
+
+// Barra con el total de lo seleccionado, visible mientras se eligen tareas.
+function suma(r) {
+  const caja = $('#suma');
+  caja.hidden = !r.ids.length;
+  if (!r.ids.length) return;
+  caja.innerHTML = '<b>' + r.ids.length + (r.ids.length === 1 ? ' seleccionada' : ' seleccionadas') + '</b>' +
+    '<span><b>' + h(r.total) + ' h</b> <span class="gris">(' + h(r.base) + ' h más ' + h(r.colchon) + ' h de colchón)</span></span>' +
+    '<b class="plata">' + plata(r.total * E.tarifa) + '</b><span class="empuje"></span>' +
+    '<button class="btn" data-ir="cotizador" type="button">Ajustar horas</button>' +
+    '<button class="btn principal" data-ir="compartir" type="button">Armar para compartir</button>';
+}
+
+// Líneas de la hoja para compartir: el colchón va sumado dentro de cada ítem.
+function lineasCompartir() {
+  const ids = Object.keys(E.elegidas).filter((id) => D.tareas.some((t) => t.id === id));
+  return ids.map((id) => {
+    const t = D.tareas.find((x) => x.id === id);
+    let horas = (Number(E.elegidas[id]) || 0) * (1 + (Number(E.colchon[t.tipo]) || 0) / 100);
+    horas = E.compartir.redondear ? Math.ceil(horas * 2) / 2 : Math.round(horas * 10) / 10;
+    return { nombre: t.nombre, horas, costo: horas * E.tarifa };
+  });
+}
+
+function hojaHTML() {
+  const c = E.compartir, ls = lineasCompartir();
+  const totH = ls.reduce((a, l) => a + l.horas, 0), totC = ls.reduce((a, l) => a + l.costo, 0);
+  const hoy = new Date();
+  const fechaHoy = String(hoy.getDate()).padStart(2, '0') + '/' + String(hoy.getMonth() + 1).padStart(2, '0') + '/' + String(hoy.getFullYear()).slice(2);
+  let html = '<h2>' + esc(c.titulo || 'Estimación') + '</h2><p class="meta">' + (c.cliente ? esc(c.cliente) + ' · ' : '') + fechaHoy + '</p>';
+  if (!ls.length) return html + '<p class="vacio">Todavía no hay tareas seleccionadas. Tildalas en la pestaña Tareas.</p>';
+  html += '<table><thead><tr><th>Ítem</th>' + (c.horas ? '<th class="num">Horas</th>' : '') + (c.costo ? '<th class="num">Costo</th>' : '') + '</tr></thead><tbody>';
+  ls.forEach((l) => { html += '<tr><td>' + esc(l.nombre) + '</td>' + (c.horas ? '<td class="num">' + h(l.horas) + '</td>' : '') + (c.costo ? '<td class="num">' + plata(l.costo) + '</td>' : '') + '</tr>'; });
+  if (c.horas || c.costo) html += '<tr class="tot"><td>Total</td>' + (c.horas ? '<td class="num">' + h(totH) + ' h</td>' : '') + (c.costo ? '<td class="num">' + plata(totC) + '</td>' : '') + '</tr>';
+  html += '</tbody></table>';
+  if (c.nota) html += '<p class="pie">' + esc(c.nota) + '</p>';
+  return html;
+}
+
+function compartir() { $('#hoja').innerHTML = hojaHTML(); }
+
+function textoCompartir() {
+  const c = E.compartir, ls = lineasCompartir();
+  const totH = ls.reduce((a, l) => a + l.horas, 0), totC = ls.reduce((a, l) => a + l.costo, 0);
+  const out = [(c.titulo || 'Estimación') + (c.cliente ? ' · ' + c.cliente : ''), ''];
+  ls.forEach((l) => out.push('- ' + l.nombre + (c.horas ? ': ' + h(l.horas) + ' h' : '') + (c.costo ? (c.horas ? ' · ' : ': ') + plata(l.costo) : '')));
+  if (c.horas || c.costo) out.push('', 'Total: ' + [c.horas ? h(totH) + ' h' : '', c.costo ? plata(totC) : ''].filter(Boolean).join(' · '));
+  if (c.nota) out.push('', c.nota);
+  return out.join('\n');
+}
+
+function proyectos() {
+  const filas = D.proyectos.slice().sort((a, b) => { const x = a[E.ordenP.col], y = b[E.ordenP.col]; return (typeof x === 'string' ? x.localeCompare(y, 'es') : x - y) * E.ordenP.dir; });
+  const cols = [{ t: 'Proyecto', k: 'nombre' }, { t: 'Horas', k: 'total', num: 1 }, { t: 'Medidas', k: 'medido', num: 1 }, { t: 'Estimadas', k: 'estimado', num: 1 }, { t: 'Costo', k: 'total', num: 1 }, { t: 'Período', k: 'ini' }, { t: 'Sesiones', k: 'sesiones', num: 1 }];
+  let html = cabecera(cols, E.ordenP) + '<tbody>';
+  filas.forEach((p) => {
+    html += '<tr class="fila" data-proy="' + esc(p.id) + '"><td><b>' + esc(p.nombre) + '</b></td><td class="num"><b>' + h(p.total, 0) + '</b></td><td class="num">' + h(p.medido, 0) + '</td><td class="num">' + h(p.estimado, 0) + '</td><td class="num plata">' + plata(p.total * E.tarifa) + '</td><td>' + fecha(p.ini) + ' al ' + fecha(p.fin) + '</td><td class="num">' + p.sesiones + '</td></tr>';
+    if (abiertas.has('p:' + p.id)) {
+      html += '<tr class="detalle"><td colspan="7"><div class="mini">' + p.temas.map((t) => '<div><span>' + esc(t.tema) + '</span><b>' + h(t.h) + ' h · ' + plata(t.h * E.tarifa) + '</b></div>').join('') + '</div></td></tr>';
+    }
+  });
+  $('#t-proy').innerHTML = html + '</tbody>';
+}
+
+function meses() {
+  const max = Math.max.apply(null, D.meses.map((m) => m.medido + m.estimado).concat([1]));
+  $('#meses').innerHTML = D.meses.map((m) => {
+    const tot = m.medido + m.estimado;
+    return '<div class="mes" title="' + m.mes + ': ' + h(tot, 0) + ' h, ' + plata(tot * E.tarifa) + '"><em>' + h(tot, 0) + '</em><div class="col"><div class="est" style="height:' + (m.estimado / max * 100) + '%"></div><div class="med" style="height:' + (m.medido / max * 100) + '%"></div></div><span>' + m.mes.slice(5) + '/' + m.mes.slice(2, 4) + '</span></div>';
+  }).join('');
+}
+
+function vista(v) {
+  E.vista = v;
+  document.body.dataset.vista = v;
+  document.querySelectorAll('[data-vista]').forEach((s) => { s.hidden = s.dataset.vista !== v; });
+  document.querySelectorAll('#pest button').forEach((b) => b.classList.toggle('activa', b.dataset.v === v));
+  guardar();
+}
+
+function todo() { kpis(); chips(); tareas(); cotizador(); proyectos(); meses(); compartir(); }
+
+// ---------- eventos ----------
+$('#tarifa').value = E.tarifa; $('#moneda').value = E.moneda;
+['propio', 'ajeno', 'otro'].forEach((k) => {
+  const i = $('#c-' + k); i.value = E.colchon[k];
+  i.addEventListener('input', () => { E.colchon[k] = Number(i.value) || 0; guardar(); resumen(); });
+});
+$('#tarifa').addEventListener('input', () => { E.tarifa = Number($('#tarifa').value) || 0; guardar(); todo(); });
+$('#moneda').addEventListener('change', () => { E.moneda = $('#moneda').value; guardar(); todo(); });
+$('#buscar').addEventListener('input', tareas);
+$('#tema').addEventListener('click', () => { E.tema = E.tema === 'oscuro' ? 'claro' : 'oscuro'; document.documentElement.dataset.tema = E.tema; guardar(); });
+$('#pest').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) vista(b.dataset.v); });
+
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('th[data-orden]');
+  if (th) {
+    const o = th.closest('table').id === 't-proy' ? E.ordenP : E.orden;
+    if (o.col === th.dataset.orden) o.dir *= -1; else { o.col = th.dataset.orden; o.dir = th.dataset.orden === 'nombre' ? 1 : -1; }
+    guardar(); tareas(); proyectos(); return;
+  }
+  const ir = e.target.closest('[data-ir]'); if (ir) { vista(ir.dataset.ir); window.scrollTo(0, 0); return; }
+  if (e.target.closest('#solo-sel')) { E.soloSel = !E.soloSel; guardar(); tareas(); return; }
+  const tipo = e.target.closest('[data-tipo]'); if (tipo) { E.tipo = tipo.dataset.tipo; guardar(); chips(); tareas(); return; }
+  const conf = e.target.closest('[data-conf]'); if (conf) { E.conf = conf.dataset.conf; guardar(); chips(); tareas(); return; }
+  const elegir = e.target.closest('[data-elegir]');
+  if (elegir) {
+    const t = D.tareas.find((x) => x.id === elegir.dataset.elegir);
+    if (elegir.checked) E.elegidas[t.id] = Math.round(t.prom * 10) / 10; else delete E.elegidas[t.id];
+    guardar(); cotizador(); if (E.soloSel) tareas(); return;
+  }
+  const set = e.target.closest('[data-set]'); if (set) { E.elegidas[set.dataset.set] = Math.round(Number(set.dataset.v) * 10) / 10; guardar(); cotizador(); return; }
+  const quitar = e.target.closest('[data-quitar]'); if (quitar) { delete E.elegidas[quitar.dataset.quitar]; guardar(); cotizador(); tareas(); return; }
+  const fila = e.target.closest('tr.fila');
+  if (fila) {
+    const k = fila.dataset.id ? 't:' + fila.dataset.id : 'p:' + fila.dataset.proy;
+    if (abiertas.has(k)) abiertas.delete(k); else abiertas.add(k);
+    tareas(); proyectos();
+  }
+});
+document.addEventListener('input', (e) => {
+  const i = e.target.closest('[data-horas]');
+  if (!i) return;
+  E.elegidas[i.dataset.horas] = Number(i.value) || 0; guardar();
+  const celda = document.querySelector('[data-costo="' + CSS.escape(i.dataset.horas) + '"]');
+  if (celda) celda.textContent = plata(E.elegidas[i.dataset.horas] * E.tarifa);
+  resumen();
+});
+$('#limpiar').addEventListener('click', () => { E.elegidas = {}; guardar(); cotizador(); tareas(); });
+$('#copiar').addEventListener('click', () => {
+  const r = resumen();
+  const lineas = r.ids.map((id) => { const t = D.tareas.find((x) => x.id === id); const hs = Number(E.elegidas[id]) || 0; return '- ' + t.nombre + ': ' + h(hs) + ' h (' + plata(hs * E.tarifa) + ')'; });
+  const texto = ['Cotización', ''].concat(lineas, ['', 'Horas base: ' + h(r.base) + ' h', 'Colchón: ' + h(r.colchon) + ' h', 'Horas totales: ' + h(r.total) + ' h (' + h(r.total / 8) + ' jornadas de 8 h)', 'Valor por hora: ' + plata(E.tarifa), 'Costo: ' + plata(r.total * E.tarifa)]).join('\n');
+  navigator.clipboard.writeText(texto).then(() => { const b = $('#copiar'); const v = b.textContent; b.textContent = 'Copiado'; setTimeout(() => { b.textContent = v; }, 1400); });
+});
+
+// Hoja para compartir
+E.compartir = Object.assign({ titulo: 'Estimación', cliente: '', horas: true, costo: true, redondear: true, nota: '' }, E.compartir || {});
+[['#s-titulo', 'titulo'], ['#s-cliente', 'cliente'], ['#s-nota', 'nota']].forEach(([sel, k]) => {
+  const i = $(sel); i.value = E.compartir[k];
+  i.addEventListener('input', () => { E.compartir[k] = i.value; guardar(); compartir(); });
+});
+[['#s-horas', 'horas'], ['#s-costo', 'costo'], ['#s-redondear', 'redondear']].forEach(([sel, k]) => {
+  const i = $(sel); i.checked = !!E.compartir[k];
+  i.addEventListener('change', () => { E.compartir[k] = i.checked; guardar(); compartir(); });
+});
+const avisar = (b, t) => { const v = b.textContent; b.textContent = t; setTimeout(() => { b.textContent = v; }, 1400); };
+$('#s-copiar').addEventListener('click', () => navigator.clipboard.writeText(textoCompartir()).then(() => avisar($('#s-copiar'), 'Copiado')));
+$('#s-pdf').addEventListener('click', () => window.print());
+$('#s-html').addEventListener('click', () => {
+  const css = 'body{margin:0;background:#f4f2ec;color:#1d2026;font:15px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}.hoja{max-width:760px;margin:40px auto;padding:36px 40px;background:#fff;border:1px solid #dedbd2;border-radius:12px}h2{margin:0;font-size:24px}.meta{margin:4px 0 22px;color:#5c6370;font-size:13.5px}table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #dedbd2}th{color:#5c6370;font-size:12px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #1d2026}.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}tr.tot td{border-top:2px solid #1d2026;border-bottom:0;font-weight:700;font-size:17px}.pie{margin:18px 0 0;color:#5c6370;font-size:13px;white-space:pre-wrap}@media print{body{background:#fff}.hoja{border:0;margin:0;padding:0}}';
+  const doc = '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(E.compartir.titulo || 'Estimación') + '</title><style>' + css + '</style></head><body><div class="hoja">' + hojaHTML() + '</div></body></html>';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([doc], { type: 'text/html' }));
+  a.download = (E.compartir.titulo || 'estimacion').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.html';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+document.documentElement.dataset.tema = E.tema;
+$('#aviso').hidden = !!DATOS_REALES;
+todo();
+vista(['tareas', 'cotizador', 'compartir', 'proyectos', 'meses'].includes(E.vista) ? E.vista : 'tareas');
+</script>
+</body>
+</html>

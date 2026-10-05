@@ -1,0 +1,54 @@
+{
+  "yo": "Ana",
+  "raicesExtra": [
+    "~/Desktop"
+  ],
+  "ignorarCarpetas": "^(node_modules|skills|tiempos-reales|\\.claude|memory)$",
+  "personas": [
+    {
+      "nombre": "Ana",
+      "patron": "^ana|ana@ejemplo\\.com|^claude$|noreply@anthropic|gpt-engineer-app|^lovable|codex cli"
+    },
+    {
+      "nombre": "Sofía",
+      "patron": "sofia|sofía"
+    }
+  ],
+  "proyectos": [
+    {
+      "id": "mi-app",
+      "nombre": "Mi App",
+      "carpetas": [
+        "^mi-app",
+        "^mi-app-landing"
+      ],
+      "palabras": "mi.?app",
+      "temas": [
+        [
+          "Reservas y turnos",
+          "crud",
+          "reserva|turnos?\\b|agenda"
+        ],
+        [
+          "Cobro de señas",
+          "pagos-mp",
+          "se[nñ]a|anticipo"
+        ]
+      ],
+      "carpetaTema": [
+        [
+          "^mi-app-landing",
+          "Landing"
+        ]
+      ]
+    },
+    {
+      "id": "tienda",
+      "nombre": "Tienda de un cliente",
+      "carpetas": [
+        "^tienda"
+      ],
+      "palabras": "tienda"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# Lo propio de cada persona no se versiona: proyectos, horas e informes.
+config.json
+manual.csv
+catalogo.md
+proyectos/
+tablero.html
+node_modules/

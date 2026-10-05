@@ -1,0 +1,5 @@
+# Horas cargadas a mano, para el trabajo que no queda en las transcripciones de Claude Code.
+# Una fila por bloque de trabajo. La tarea es un id del catálogo (ver README) o el nombre
+# de una funcionalidad del proyecto. Las horas van con punto o coma decimal.
+fecha,proyecto,tarea,horas,quien,nota
+2026-10-06,mi-app,pagos-mp,3.5,Sofía,webhook de reintentos
